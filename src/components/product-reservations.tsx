@@ -118,8 +118,8 @@ export function ProductReservations({
         quantityNum,
         orderId,
         reason || "Reserva de stock",
-        user.uid,
-        user.email || "Usuario",
+        user.id,
+        user.name || "Usuario",
         options
       );
 

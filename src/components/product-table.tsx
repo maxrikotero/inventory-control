@@ -133,6 +133,8 @@ export function ProductTable() {
               id: Math.random().toString(36).slice(2),
               createdAt: Date.now(),
               updatedAt: Date.now(),
+              userId: "import-user", // Temporary user ID for imported products
+              reservedStock: 0,
               ...payload,
             });
           }
@@ -216,22 +218,13 @@ export function ProductTable() {
                     <div className="flex items-center gap-2">
                       {p.name}
                       {isOutOfStock && (
-                        <AlertTriangle
-                          className="h-4 w-4 text-red-500"
-                          title="Sin stock"
-                        />
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
                       )}
                       {hasMinStockAlert && !isOutOfStock && (
-                        <AlertCircle
-                          className="h-4 w-4 text-orange-500"
-                          title="Stock bajo"
-                        />
+                        <AlertCircle className="h-4 w-4 text-orange-500" />
                       )}
                       {hasMaxStockAlert && (
-                        <TrendingUp
-                          className="h-4 w-4 text-blue-500"
-                          title="Stock alto"
-                        />
+                        <TrendingUp className="h-4 w-4 text-blue-500" />
                       )}
                     </div>
                   </TableCell>

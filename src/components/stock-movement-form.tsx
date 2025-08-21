@@ -117,8 +117,8 @@ export function StockMovementForm({
             product.id,
             quantityNum,
             reason,
-            user.uid,
-            user.email || "Usuario",
+            user.id,
+            user.name || "Usuario",
             { location }
           );
           newStockLevel += quantityNum;
@@ -133,8 +133,8 @@ export function StockMovementForm({
             product.id,
             quantityNum,
             reason,
-            user.uid,
-            user.email || "Usuario",
+            user.id,
+            user.name || "Usuario",
             { location }
           );
           newStockLevel -= quantityNum;
@@ -145,8 +145,8 @@ export function StockMovementForm({
             product.id,
             quantityNum,
             reason,
-            user.uid,
-            user.email || "Usuario",
+            user.id,
+            user.name || "Usuario",
             { location }
           );
           newStockLevel = quantityNum; // Adjustment sets absolute value
@@ -161,8 +161,8 @@ export function StockMovementForm({
             product.id,
             quantityNum,
             reason,
-            user.uid,
-            user.email || "Usuario",
+            user.id,
+            user.name || "Usuario",
             { location }
           );
           newStockLevel -= quantityNum;
@@ -181,8 +181,8 @@ export function StockMovementForm({
             product.id,
             quantityNum,
             reason,
-            user.uid,
-            user.email || "Usuario",
+            user.id,
+            user.name || "Usuario",
             location || "Almacén principal",
             toLocation
           );

@@ -21,7 +21,7 @@ import {
   getUserSubscription,
   getTrialDaysRemaining,
 } from "@/lib/auth-service";
-import { UserProfile } from "@/types/user";
+import { UserProfile as UserProfileType } from "@/types/user";
 import { toast } from "sonner";
 import {
   User,
@@ -85,7 +85,7 @@ export function UserProfile() {
   const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true);
     try {
-      const profileUpdate: Partial<UserProfile> = {
+      const profileUpdate: Partial<UserProfileType> = {
         firstName: data.firstName,
         lastName: data.lastName,
         company: data.company,
@@ -310,7 +310,7 @@ export function UserProfile() {
             <div className="space-y-2">
               <p className="text-sm font-medium">Funciones incluidas:</p>
               <div className="space-y-1">
-                {subscription.features.map((feature, index) => (
+                {subscription.features.map((feature: string, index: number) => (
                   <div key={index} className="flex items-center gap-2 text-xs">
                     <CheckCircle className="h-3 w-3 text-green-500" />
                     <span className="capitalize">

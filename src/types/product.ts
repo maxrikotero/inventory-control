@@ -107,7 +107,7 @@ export type SmartNotification = {
   productName: string;
   title: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   actionRequired: boolean;
   acknowledged: boolean;
   createdAt: number;
@@ -146,7 +146,7 @@ export type NotificationRule = {
   name: string;
   type: NotificationType;
   enabled: boolean;
-  conditions: Record<string, any>;
+  conditions: Record<string, unknown>;
   actions: NotificationAction[];
   createdAt: number;
   updatedAt: number;
@@ -155,5 +155,5 @@ export type NotificationRule = {
 export type NotificationAction = {
   type: "email" | "push" | "sms" | "webhook";
   enabled: boolean;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 };

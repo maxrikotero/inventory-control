@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Product, InventoryAudit } from "@/types/product";
+import { Product, InventoryAudit as InventoryAuditType } from "@/types/product";
 import {
   createInventoryAudit,
   getRecentAudits,
@@ -61,7 +61,7 @@ export function InventoryAudit({
   onProductUpdate,
 }: InventoryAuditProps) {
   const { user } = useAuth();
-  const [audits, setAudits] = useState<InventoryAudit[]>([]);
+  const [audits, setAudits] = useState<InventoryAuditType[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [expectedCount, setExpectedCount] = useState("");
   const [actualCount, setActualCount] = useState("");
@@ -110,8 +110,8 @@ export function InventoryAudit({
         selectedProduct.id,
         expectedCountNum,
         actualCountNum,
-        user.uid,
-        user.email || "Usuario",
+        user.id,
+        user.name || "Usuario",
         notes || undefined
       );
 
@@ -145,13 +145,13 @@ export function InventoryAudit({
     }
   };
 
-  const getAuditStatusColor = (audit: InventoryAudit) => {
+  const getAuditStatusColor = (audit: InventoryAuditType) => {
     if (audit.difference === 0) return "bg-green-100 text-green-800";
     if (Math.abs(audit.difference) <= 2) return "bg-yellow-100 text-yellow-800";
     return "bg-red-100 text-red-800";
   };
 
-  const getAuditStatusIcon = (audit: InventoryAudit) => {
+  const getAuditStatusIcon = (audit: InventoryAuditType) => {
     if (audit.difference === 0) return <CheckCircle className="h-4 w-4" />;
     if (audit.difference > 0) return <TrendingUp className="h-4 w-4" />;
     return <TrendingDown className="h-4 w-4" />;

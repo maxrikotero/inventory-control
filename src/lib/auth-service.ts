@@ -1,4 +1,9 @@
-import { User, UserRegistrationData, UserProfile } from "@/types/user";
+import {
+  User,
+  UserRegistrationData,
+  UserProfile,
+  UserSubscription,
+} from "@/types/user";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
