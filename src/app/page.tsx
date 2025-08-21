@@ -1,103 +1,219 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import { ProductTable } from "@/components/product-table";
+import { Dashboard } from "@/components/dashboard";
+import { AlertsWidget } from "@/components/alerts-widget";
+import { SmartNotificationsCenter } from "@/components/smart-notifications-center";
+import { NotificationSettings } from "@/components/notification-settings";
+import { InventoryAudit } from "@/components/inventory-audit";
+import { UserProfile } from "@/components/user-profile";
+import { AuthWrapper } from "@/components/auth-wrapper";
+import { useAuth } from "@/components/auth-provider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { getAllProductsWithAlerts } from "@/lib/products";
+import { Product } from "@/types/product";
+import {
+  BarChart3,
+  Package,
+  Bell,
+  BellRing,
+  ClipboardCheck,
+  Settings,
+  LogOut,
+  User,
+} from "lucide-react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { user, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [products, setProducts] = useState<Product[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    if (user) {
+      loadProducts();
+    }
+  }, [user]);
+
+  const loadProducts = async () => {
+    try {
+      const productsData = await getAllProductsWithAlerts();
+      setProducts(productsData);
+    } catch (error) {
+      console.error("Error loading products:", error);
+    }
+  };
+
+  const handleProductUpdate = (updatedProduct: Product) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+    );
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  return (
+    <AuthWrapper>
+      <div className="space-y-6">
+        {/* Header with user info and logout */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Sistema de Control de Stock
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Dashboard completo para gestión de inventario, productos y
+              analytics.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>
+                {user?.name || user?.email}
+                {user?.company && (
+                  <span className="text-xs ml-1">• {user.company}</span>
+                )}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSignOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Cerrar Sesión
+            </Button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="products" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Productos
+            </TabsTrigger>
+            <TabsTrigger
+              value="notifications"
+              className="flex items-center gap-2"
+            >
+              <BellRing className="h-4 w-4" />
+              Notificaciones
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Auditorías
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Configuración
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Perfil
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <Dashboard />
+          </TabsContent>
+
+          <TabsContent value="products">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Gestión de Productos
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Administra tu inventario, registra movimientos y gestiona
+                  reservas.
+                </p>
+              </div>
+              <ProductTable />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Centro de Notificaciones Inteligentes
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Sistema avanzado de alertas automáticas y notificaciones
+                  personalizadas.
+                </p>
+              </div>
+              <SmartNotificationsCenter />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="audit">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Sistema de Auditorías
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Realiza conteos físicos y ajusta diferencias de inventario.
+                </p>
+              </div>
+              <InventoryAudit
+                products={products}
+                onProductUpdate={handleProductUpdate}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Configuración de Notificaciones
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Personaliza umbrales y tipos de alertas para cada producto.
+                </p>
+              </div>
+              <NotificationSettings
+                products={products}
+                onProductUpdate={handleProductUpdate}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Perfil de Usuario
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Gestiona tu información personal y configuración de cuenta.
+                </p>
+              </div>
+              <UserProfile />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AuthWrapper>
   );
 }
