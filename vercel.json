@@ -1,4 +1,5 @@
 {
+  "framework": "nextjs",
   "env": {
     "NEXT_PUBLIC_USE_MOCK": "true"
   }
