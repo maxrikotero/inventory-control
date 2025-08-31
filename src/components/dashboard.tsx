@@ -139,14 +139,14 @@ export function Dashboard() {
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("es-ES", {
+    return new Intl.NumberFormat("es-AR", {
       style: "currency",
-      currency: "EUR",
+      currency: "ARS",
     }).format(value);
   };
 
   const formatNumber = (value: number) => {
-    return new Intl.NumberFormat("es-ES").format(value);
+    return new Intl.NumberFormat("es-AR").format(value);
   };
 
   const getHealthScoreColor = (score: number) => {

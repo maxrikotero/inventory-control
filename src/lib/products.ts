@@ -4,7 +4,6 @@ import {
   doc,
   getDocs,
   query,
-  orderBy,
   updateDoc,
   deleteDoc,
   where,
@@ -12,20 +11,12 @@ import {
 import { db } from "@/lib/firebase";
 import { NewProductInput, Product } from "@/types/product";
 import {
-  listProductsMock,
-  createProductMock,
-  updateProductMock,
-  removeProductMock,
-} from "@/lib/products-mock";
-import {
   checkStockAlerts,
   getReservations,
   processStockEntry,
 } from "@/lib/stock-movements";
 import { getAuthenticatedUser } from "@/lib/auth-service";
 import { StockAlert } from "@/types/product";
-
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 const COLLECTION = "products";
 
@@ -35,18 +26,20 @@ export async function listProducts(): Promise<Product[]> {
     throw new Error("Usuario no autenticado");
   }
 
-  if (USE_MOCK) return listProductsMock(user.id);
-
-  const q = query(
+  const productQuery = query(
     collection(db, COLLECTION),
-    where("userId", "==", user.id),
-    orderBy("updatedAt", "desc")
+    where("userId", "==", user.id)
   );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data() as Omit<Product, "id">;
-    return { id: d.id, ...data } as Product;
-  });
+  try {
+    const snapDocument = await getDocs(productQuery);
+    return snapDocument.docs.map((dataItem) => {
+      const data = dataItem.data() as Omit<Product, "id">;
+      return { id: dataItem.id, ...data } as Product;
+    });
+  } catch (error) {
+    console.error("Error listing products:", error);
+    return [];
+  }
 }
 
 export async function createProduct(
@@ -61,8 +54,6 @@ export async function createProduct(
 
   const actualUserId = userId || user.id;
   const actualUserName = userName || user.name;
-
-  if (USE_MOCK) return createProductMock(input, actualUserId);
 
   const now = Date.now();
   const payload = {
@@ -91,7 +82,6 @@ export async function createProduct(
 }
 
 export async function updateProduct(id: string, updates: Partial<Product>) {
-  if (USE_MOCK) return updateProductMock(id, updates);
   const ref = doc(db, COLLECTION, id);
   await updateDoc(ref, {
     ...(updates as Partial<Product>),
@@ -100,7 +90,6 @@ export async function updateProduct(id: string, updates: Partial<Product>) {
 }
 
 export async function removeProduct(id: string) {
-  if (USE_MOCK) return removeProductMock(id);
   await deleteDoc(doc(db, COLLECTION, id));
 }
 
@@ -138,7 +127,7 @@ export async function getAllProductsWithAlerts(): Promise<
     products.map(async (product) => {
       const reservations = await getReservations(product.id);
       const totalReserved = reservations.reduce(
-        (sum, r) => sum + r.quantity,
+        (sum, reservation) => sum + reservation.quantity,
         0
       );
 

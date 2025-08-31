@@ -9,8 +9,6 @@ import {
   updateDoc,
   deleteDoc,
   limit as limitQuery,
-  startAfter,
-  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -70,21 +68,22 @@ export async function createStockMovement(
     reason,
     userId,
     userName,
-    referenceId: options?.referenceId,
-    location: options?.location,
+    referenceId: options?.referenceId || "",
+    location: options?.location || "",
     createdAt: now,
     updatedAt: now,
   };
 
-  if (USE_MOCK) {
-    const newMovement: StockMovement = {
-      id: "mov-" + Math.random().toString(36).slice(2),
-      ...movement,
-    };
-    const movements = readMockData<StockMovement>(MOVEMENTS_STORAGE_KEY);
-    writeMockData(MOVEMENTS_STORAGE_KEY, [newMovement, ...movements]);
-    return newMovement;
-  }
+  console.log("movement", movement);
+  // if (USE_MOCK) {
+  //   const newMovement: StockMovement = {
+  //     id: "mov-" + Math.random().toString(36).slice(2),
+  //     ...movement,
+  //   };
+  //   const movements = readMockData<StockMovement>(MOVEMENTS_STORAGE_KEY);
+  //   writeMockData(MOVEMENTS_STORAGE_KEY, [newMovement, ...movements]);
+  //   return newMovement;
+  // }
 
   const ref = await addDoc(collection(db, MOVEMENTS_COLLECTION), movement);
   return { id: ref.id, ...movement };
@@ -114,27 +113,29 @@ export async function getStockMovements(
   limit?: number,
   lastMovementId?: string
 ): Promise<StockMovement[]> {
-  if (USE_MOCK) {
-    let movements = readMockData<StockMovement>(MOVEMENTS_STORAGE_KEY);
+  // if (USE_MOCK) {
+  //   let movements = readMockData<StockMovement>(MOVEMENTS_STORAGE_KEY);
 
-    if (productId) {
-      movements = movements.filter((m) => m.productId === productId);
-    }
+  //   if (productId) {
+  //     movements = movements.filter((m) => m.productId === productId);
+  //   }
 
-    // Sort by creation date (newest first)
-    movements.sort((a, b) => b.createdAt - a.createdAt);
+  //   // Sort by creation date (newest first)
+  //   movements.sort((a, b) => b.createdAt - a.createdAt);
 
-    if (limit) {
-      movements = movements.slice(0, limit);
-    }
+  //   if (limit) {
+  //     movements = movements.slice(0, limit);
+  //   }
 
-    return movements;
-  }
-
+  //   return movements;
+  // }
+  console.log("getStockMovements ----- ", productId, limit, lastMovementId);
   let q = query(
     collection(db, MOVEMENTS_COLLECTION),
     orderBy("createdAt", "desc")
   );
+
+  console.log("getStockMovements ----- ", q);
 
   if (productId) {
     q = query(q, where("productId", "==", productId));
@@ -159,21 +160,6 @@ export async function getStockMovementsByDateRange(
   endDate: Date,
   productId?: string
 ): Promise<StockMovement[]> {
-  if (USE_MOCK) {
-    let movements = readMockData<StockMovement>(MOVEMENTS_STORAGE_KEY);
-
-    movements = movements.filter(
-      (m) =>
-        m.createdAt >= startDate.getTime() && m.createdAt <= endDate.getTime()
-    );
-
-    if (productId) {
-      movements = movements.filter((m) => m.productId === productId);
-    }
-
-    return movements.sort((a, b) => b.createdAt - a.createdAt);
-  }
-
   let q = query(
     collection(db, MOVEMENTS_COLLECTION),
     where("createdAt", ">=", startDate.getTime()),
@@ -186,6 +172,7 @@ export async function getStockMovementsByDateRange(
   }
 
   const snap = await getDocs(q);
+
   return snap.docs.map(
     (d) =>
       ({

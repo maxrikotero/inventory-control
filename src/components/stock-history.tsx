@@ -95,6 +95,7 @@ export function StockHistory({ productId, productName }: StockHistoryProps) {
 
   const loadMovements = async () => {
     setLoading(true);
+
     try {
       let data: StockMovement[];
 

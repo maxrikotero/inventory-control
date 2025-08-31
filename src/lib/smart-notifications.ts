@@ -53,6 +53,7 @@ export async function generateSmartNotifications(): Promise<
   SmartNotification[]
 > {
   const products = await getAllProductsWithAlerts();
+
   const notifications: SmartNotification[] = [];
 
   for (const product of products) {
@@ -284,32 +285,6 @@ async function generateAuditNotifications(): Promise<SmartNotification[]> {
 
 // Get stored notifications
 export async function getSmartNotifications(): Promise<SmartNotification[]> {
-  if (USE_MOCK) {
-    const stored = readMockData<SmartNotification>(NOTIFICATIONS_STORAGE_KEY);
-    const fresh = await generateSmartNotifications();
-
-    // Merge stored and fresh notifications, avoiding duplicates
-    const merged = [...stored];
-    fresh.forEach((freshNotif) => {
-      const exists = stored.some(
-        (s) =>
-          s.type === freshNotif.type &&
-          s.productId === freshNotif.productId &&
-          Math.abs(s.createdAt - freshNotif.createdAt) < 24 * 60 * 60 * 1000 // Same day
-      );
-      if (!exists) {
-        merged.push(freshNotif);
-      }
-    });
-
-    // Sort and filter expired
-    const now = Date.now();
-    const filtered = merged.filter((n) => !n.expiresAt || n.expiresAt > now);
-
-    writeMockData(NOTIFICATIONS_STORAGE_KEY, filtered);
-    return filtered;
-  }
-
   // TODO: Implement Firebase storage
   return generateSmartNotifications();
 }

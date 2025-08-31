@@ -1,5 +1,10 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import {
+  getAuth,
+  browserLocalPersistence,
+  setPersistence,
+} from "firebase/auth";
+import {
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
@@ -27,3 +32,15 @@ const db = getApps().length
     });
 
 export { app, db };
+
+// Initialize Firebase Auth with persistent session in the browser
+const auth = getAuth(app);
+
+if (typeof window !== "undefined") {
+  // Ensure auth state persists across tabs and reloads
+  setPersistence(auth, browserLocalPersistence).catch(() => {
+    // Non-fatal: fallback to default persistence
+  });
+}
+
+export { auth };

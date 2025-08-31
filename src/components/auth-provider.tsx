@@ -7,7 +7,8 @@ import {
   loginUser,
   logoutUser,
   registerUser,
-  initializeDemoUser,
+  subscribeToAuthState,
+  resetPassword,
 } from "@/lib/auth-service";
 import { UserRegistrationData } from "@/types/user";
 
@@ -21,6 +22,9 @@ type AuthContextValue = {
     userData: UserRegistrationData
   ) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
+  sendPasswordReset: (
+    email: string
+  ) => Promise<{ success: boolean; error?: string }>;
   loading: boolean;
 };
 
@@ -31,21 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // Initialize demo user first
-        initializeDemoUser();
-
-        const authenticatedUser = getAuthenticatedUser();
-        setUser(authenticatedUser);
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-      } finally {
-        setLoading(false);
-      }
+    const authenticatedUser = getAuthenticatedUser();
+    setUser(authenticatedUser);
+    const unsubscribe = subscribeToAuthState((u) => setUser(u));
+    setLoading(false);
+    return () => {
+      unsubscribe?.();
     };
-
-    initializeAuth();
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -84,6 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally {
           setLoading(false);
         }
+      },
+      async sendPasswordReset(email: string) {
+        return resetPassword(email);
       },
     }),
     [user, loading]

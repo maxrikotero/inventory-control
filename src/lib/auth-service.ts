@@ -4,6 +4,16 @@ import {
   UserProfile,
   UserSubscription,
 } from "@/types/user";
+import { auth, db } from "@/lib/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  updateProfile as firebaseUpdateProfile,
+} from "firebase/auth";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
@@ -96,56 +106,93 @@ export async function registerUser(userData: UserRegistrationData): Promise<{
       };
     }
 
-    if (USE_MOCK) {
-      const users = readMockUsers();
+    // if (USE_MOCK) {
+    //   const users = readMockUsers();
 
-      // Check if user already exists
-      const existingUser = users.find(
-        (u) => u.email.toLowerCase() === userData.email.toLowerCase()
-      );
-      if (existingUser) {
-        return { success: false, error: "Ya existe una cuenta con este email" };
-      }
+    //   // Check if user already exists
+    //   const existingUser = users.find(
+    //     (u) => u.email.toLowerCase() === userData.email.toLowerCase()
+    //   );
+    //   if (existingUser) {
+    //     return { success: false, error: "Ya existe una cuenta con este email" };
+    //   }
 
-      // Create new user
-      const now = Date.now();
-      const newUser: User = {
-        id: generateUserId(),
-        email: userData.email.toLowerCase(),
-        name: `${userData.firstName} ${userData.lastName}`,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        company: userData.company,
-        industry: userData.industry,
-        phone: userData.phone,
-        createdAt: now,
-        updatedAt: now,
-        isActive: true,
-        subscription: {
-          plan: "free",
-          status: "trial",
-          startDate: now,
-          endDate: now + 30 * 24 * 60 * 60 * 1000, // 30 days trial
-          features: ["basic_inventory", "up_to_100_products", "basic_reports"],
-        },
-      };
+    //   // Create new user
+    //   const now = Date.now();
+    //   const newUser: User = {
+    //     id: generateUserId(),
+    //     email: userData.email.toLowerCase(),
+    //     name: `${userData.firstName} ${userData.lastName}`,
+    //     firstName: userData.firstName,
+    //     lastName: userData.lastName,
+    //     company: userData.company,
+    //     industry: userData.industry,
+    //     phone: userData.phone,
+    //     createdAt: now,
+    //     updatedAt: now,
+    //     isActive: true,
+    //     subscription: {
+    //       plan: "free",
+    //       status: "trial",
+    //       startDate: now,
+    //       endDate: now + 30 * 24 * 60 * 60 * 1000, // 30 days trial
+    //       features: ["basic_inventory", "up_to_100_products", "basic_reports"],
+    //     },
+    //   };
 
-      // Store hashed password separately (in real app, this would be in secure storage)
-      const userWithPassword = {
-        ...newUser,
-        passwordHash: hashPassword(userData.password),
-      };
+    //   // Store hashed password separately (in real app, this would be in secure storage)
+    //   const userWithPassword = {
+    //     ...newUser,
+    //     passwordHash: hashPassword(userData.password),
+    //   };
 
-      users.push(userWithPassword);
-      writeMockUsers(users);
+    //   users.push(userWithPassword);
+    //   writeMockUsers(users);
 
-      // Don't return password hash
-      const { passwordHash, ...userToReturn } = userWithPassword;
-      return { success: true, user: userToReturn };
+    //   // Don't return password hash
+    //   const { passwordHash, ...userToReturn } = userWithPassword;
+    //   return { success: true, user: userToReturn };
+    // }
+
+    // Firebase Auth registration
+    const cred = await createUserWithEmailAndPassword(
+      auth,
+      userData.email,
+      userData.password
+    );
+
+    const displayName = `${userData.firstName} ${userData.lastName}`.trim();
+    try {
+      await firebaseUpdateProfile(cred.user, { displayName });
+    } catch {
+      // ignore non-fatal errors
     }
 
-    // TODO: Implement Firebase Auth registration
-    throw new Error("Firebase registration not implemented yet");
+    const now = Date.now();
+    const profileToStore: Omit<User, "id"> = {
+      email: userData.email.toLowerCase(),
+      name: displayName,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      company: userData.company,
+      industry: userData.industry,
+      phone: userData.phone,
+      createdAt: now,
+      updatedAt: now,
+      isActive: true,
+      subscription: {
+        plan: "free",
+        status: "trial",
+        startDate: now,
+        endDate: now + 30 * 24 * 60 * 60 * 1000,
+        features: ["basic_inventory", "up_to_100_products", "basic_reports"],
+      },
+    };
+
+    await setDoc(doc(db, "users", cred.user.uid), profileToStore);
+    const user: User = { id: cred.user.uid, ...profileToStore };
+    setCurrentUser(user);
+    return { success: true, user };
   } catch (error) {
     console.error("Registration error:", error);
     return {
@@ -170,38 +217,61 @@ export async function loginUser(
       return { success: false, error: "Email y contraseña son requeridos" };
     }
 
-    if (USE_MOCK) {
-      const users = readMockUsers();
-      const userWithPassword = users.find(
-        (u) =>
-          u.email.toLowerCase() === email.toLowerCase() &&
-          (u as any).passwordHash === hashPassword(password)
-      );
+    // if (USE_MOCK) {
+    //   const users = readMockUsers();
+    //   const userWithPassword = users.find(
+    //     (u) =>
+    //       u.email.toLowerCase() === email.toLowerCase() &&
+    //       (u as any).passwordHash === hashPassword(password)
+    //   );
 
-      if (!userWithPassword) {
-        return { success: false, error: "Email o contraseña incorrectos" };
-      }
+    //   if (!userWithPassword) {
+    //     return { success: false, error: "Email o contraseña incorrectos" };
+    //   }
 
-      if (!userWithPassword.isActive) {
-        return {
-          success: false,
-          error: "Cuenta desactivada. Contacta soporte.",
-        };
-      }
+    //   if (!userWithPassword.isActive) {
+    //     return {
+    //       success: false,
+    //       error: "Cuenta desactivada. Contacta soporte.",
+    //     };
+    //   }
 
-      // Update last login
-      userWithPassword.updatedAt = Date.now();
-      writeMockUsers(users);
+    //   // Update last login
+    //   userWithPassword.updatedAt = Date.now();
+    //   writeMockUsers(users);
 
-      // Don't return password hash
-      const { passwordHash, ...user } = userWithPassword as any;
-      setCurrentUser(user);
+    //   // Don't return password hash
+    //   const { passwordHash, ...user } = userWithPassword as any;
+    //   setCurrentUser(user);
 
-      return { success: true, user };
+    //   return { success: true, user };
+    // }
+
+    // Firebase login
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const snap = await getDoc(doc(db, "users", cred.user.uid));
+    if (!snap.exists()) {
+      const fallback: User = {
+        id: cred.user.uid,
+        email: cred.user.email || email,
+        name: cred.user.displayName || email.split("@")[0],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        isActive: true,
+        subscription: {
+          plan: "free",
+          status: "inactive",
+          startDate: Date.now(),
+          features: ["basic_inventory"],
+        },
+      };
+      setCurrentUser(fallback);
+      return { success: true, user: fallback };
     }
-
-    // TODO: Implement Firebase Auth login
-    throw new Error("Firebase login not implemented yet");
+    const data = snap.data() as Omit<User, "id">;
+    const user: User = { id: cred.user.uid, ...data };
+    setCurrentUser(user);
+    return { success: true, user };
   } catch (error) {
     console.error("Login error:", error);
     return {
@@ -218,7 +288,11 @@ export function getAuthenticatedUser(): User | null {
 
 // Logout user
 export async function logoutUser(): Promise<void> {
-  setCurrentUser(null);
+  try {
+    await firebaseSignOut(auth);
+  } finally {
+    setCurrentUser(null);
+  }
   // Clear any other user-specific data
   if (typeof window !== "undefined") {
     // Clear user-specific data from localStorage
@@ -247,35 +321,47 @@ export async function updateUserProfile(
   error?: string;
 }> {
   try {
-    if (USE_MOCK) {
-      const users = readMockUsers();
-      const userIndex = users.findIndex((u) => u.id === userId);
+    // if (USE_MOCK) {
+    //   const users = readMockUsers();
+    //   const userIndex = users.findIndex((u) => u.id === userId);
 
-      if (userIndex === -1) {
-        return { success: false, error: "Usuario no encontrado" };
-      }
+    //   if (userIndex === -1) {
+    //     return { success: false, error: "Usuario no encontrado" };
+    //   }
 
-      // Update user
-      const updatedUser = {
-        ...users[userIndex],
-        ...updates,
-        updatedAt: Date.now(),
-      };
+    //   // Update user
+    //   const updatedUser = {
+    //     ...users[userIndex],
+    //     ...updates,
+    //     updatedAt: Date.now(),
+    //   };
 
-      users[userIndex] = updatedUser;
-      writeMockUsers(users);
+    //   users[userIndex] = updatedUser;
+    //   writeMockUsers(users);
 
-      // Update current user if it's the same
-      const currentUser = getCurrentUser();
-      if (currentUser && currentUser.id === userId) {
-        setCurrentUser(updatedUser);
-      }
+    //   // Update current user if it's the same
+    //   const currentUser = getCurrentUser();
+    //   if (currentUser && currentUser.id === userId) {
+    //     setCurrentUser(updatedUser);
+    //   }
 
-      return { success: true, user: updatedUser };
-    }
+    //   return { success: true, user: updatedUser };
+    // }
 
-    // TODO: Implement Firebase user update
-    throw new Error("Firebase user update not implemented yet");
+    const ref = doc(db, "users", userId);
+    await updateDoc(ref, {
+      ...updates,
+      name:
+        updates.firstName || updates.lastName
+          ? `${updates.firstName ?? ""} ${updates.lastName ?? ""}`.trim()
+          : updates.name,
+      updatedAt: Date.now(),
+    });
+    const snap = await getDoc(ref);
+    const data = snap.data() as Omit<User, "id">;
+    const updatedUser: User = { id: userId, ...data };
+    setCurrentUser(updatedUser);
+    return { success: true, user: updatedUser };
   } catch (error) {
     console.error("Profile update error:", error);
     return {
@@ -293,18 +379,18 @@ export function isAuthenticated(): boolean {
 
 // Get user by email (admin function)
 export async function getUserByEmail(email: string): Promise<User | null> {
-  if (USE_MOCK) {
-    const users = readMockUsers();
-    const user = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
-    );
-    if (user) {
-      const { passwordHash, ...userWithoutPassword } = user as any;
-      return userWithoutPassword;
-    }
-  }
+  // if (USE_MOCK) {
+  //   const users = readMockUsers();
+  //   const user = users.find(
+  //     (u) => u.email.toLowerCase() === email.toLowerCase()
+  //   );
+  //   if (user) {
+  //     const { passwordHash, ...userWithoutPassword } = user as any;
+  //     return userWithoutPassword;
+  //   }
+  // }
 
-  // TODO: Implement Firebase query
+  // Client-side: avoid querying by email; rely on authenticated user
   return null;
 }
 
@@ -314,24 +400,24 @@ export async function deleteUserAccount(userId: string): Promise<{
   error?: string;
 }> {
   try {
-    if (USE_MOCK) {
-      const users = readMockUsers();
-      const filteredUsers = users.filter((u) => u.id !== userId);
+    // if (USE_MOCK) {
+    //   const users = readMockUsers();
+    //   const filteredUsers = users.filter((u) => u.id !== userId);
 
-      if (filteredUsers.length === users.length) {
-        return { success: false, error: "Usuario no encontrado" };
-      }
+    //   if (filteredUsers.length === users.length) {
+    //     return { success: false, error: "Usuario no encontrado" };
+    //   }
 
-      writeMockUsers(filteredUsers);
+    //   writeMockUsers(filteredUsers);
 
-      // If deleting current user, logout
-      const currentUser = getCurrentUser();
-      if (currentUser && currentUser.id === userId) {
-        await logoutUser();
-      }
+    //   // If deleting current user, logout
+    //   const currentUser = getCurrentUser();
+    //   if (currentUser && currentUser.id === userId) {
+    //     await logoutUser();
+    //   }
 
-      return { success: true };
-    }
+    //   return { success: true };
+    // }
 
     // TODO: Implement Firebase user deletion
     throw new Error("Firebase user deletion not implemented yet");
@@ -354,24 +440,24 @@ export async function resetPassword(email: string): Promise<{
       return { success: false, error: "Email no válido" };
     }
 
-    if (USE_MOCK) {
-      const users = readMockUsers();
-      const user = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase()
-      );
+    // if (USE_MOCK) {
+    //   const users = readMockUsers();
+    //   const user = users.find(
+    //     (u) => u.email.toLowerCase() === email.toLowerCase()
+    //   );
 
-      if (!user) {
-        // Don't reveal if user exists for security
-        return { success: true };
-      }
+    //   if (!user) {
+    //     // Don't reveal if user exists for security
+    //     return { success: true };
+    //   }
 
-      // In a real app, this would send an email
-      console.log(`Password reset email would be sent to: ${email}`);
-      return { success: true };
-    }
+    //   // In a real app, this would send an email
+    //   console.log(`Password reset email would be sent to: ${email}`);
+    //   return { success: true };
+    // }
 
-    // TODO: Implement Firebase password reset
-    throw new Error("Firebase password reset not implemented yet");
+    await sendPasswordResetEmail(auth, email);
+    return { success: true };
   } catch (error) {
     console.error("Password reset error:", error);
     return {
@@ -417,6 +503,7 @@ export function getTrialDaysRemaining(user: User): number {
 
 // Initialize demo user
 export function initializeDemoUser(): void {
+  if (!USE_MOCK) return;
   if (typeof window === "undefined") return;
 
   const users = readMockUsers();
@@ -455,4 +542,49 @@ export function initializeDemoUser(): void {
     users.push(demoUser);
     writeMockUsers(users);
   }
+}
+
+export function subscribeToAuthState(
+  onUserChange: (user: User | null) => void
+) {
+  // if (USE_MOCK) {
+  //   onUserChange(getCurrentUser());
+  //   return () => {};
+  // }
+  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    if (!firebaseUser) {
+      setCurrentUser(null);
+      onUserChange(null);
+      return;
+    }
+    try {
+      const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+      if (!snap.exists()) {
+        const minimal: User = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          name: firebaseUser.displayName || "",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          isActive: true,
+          subscription: {
+            plan: "free",
+            status: "inactive",
+            startDate: Date.now(),
+            features: ["basic_inventory"],
+          },
+        };
+        setCurrentUser(minimal);
+        onUserChange(minimal);
+        return;
+      }
+      const data = snap.data() as Omit<User, "id">;
+      const user: User = { id: firebaseUser.uid, ...data };
+      setCurrentUser(user);
+      onUserChange(user);
+    } catch {
+      onUserChange(null);
+    }
+  });
+  return unsubscribe;
 }

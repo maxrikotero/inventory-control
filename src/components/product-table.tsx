@@ -34,7 +34,6 @@ import {
   AlertTriangle,
   AlertCircle,
   TrendingUp,
-  BookmarkPlus,
 } from "lucide-react";
 import Papa from "papaparse";
 import { format } from "date-fns";
@@ -45,21 +44,23 @@ export function ProductTable() {
   const [editing, setEditing] = useState<Product | null>(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const items = await listProducts();
-        setProducts(items);
-      } catch (e) {
-        const message = e instanceof Error ? e.message : "Error cargando";
-        toast.error(message);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    const getProducts = async () => {
+      const items = await listProducts();
+
+      setProducts(items);
+    };
+    try {
+      getProducts();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error cargando";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  function addLocal(p: Product) {
-    setProducts((prev) => [p, ...prev]);
+  function addLocal(product: Product) {
+    setProducts((prev) => [product, ...prev]);
   }
 
   async function remove(id: string) {

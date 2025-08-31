@@ -30,7 +30,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
-  const { signIn, loading } = useAuth();
+  const { signIn, loading, sendPasswordReset } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -115,7 +115,21 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
             <button
               type="button"
               className="text-blue-600 hover:underline"
-              onClick={() => toast.info("Función no implementada aún")}
+              onClick={async () => {
+                const email = (
+                  document.getElementById("email") as HTMLInputElement
+                )?.value;
+                if (!email) {
+                  toast.info("Ingresa tu email para enviar el reinicio");
+                  return;
+                }
+                const res = await sendPasswordReset(email);
+                if (res.success)
+                  toast.success(
+                    "Te enviamos un email para resetear tu contraseña"
+                  );
+                else toast.error(res.error || "No pudimos enviar el email");
+              }}
             >
               ¿Olvidaste tu contraseña?
             </button>
@@ -125,16 +139,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
             {loading ? "Iniciando..." : "Iniciar Sesión"}
           </Button>
 
-          {/* Demo credentials */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              Credenciales de demostración:
-            </p>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p>Email: demo@inventario.com</p>
-              <p>Contraseña: demo123</p>
-            </div>
-          </div>
+          {/* Demo credentials removed when using Firebase */}
 
           <div className="text-center">
             <p className="text-sm text-gray-600">

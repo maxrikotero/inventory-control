@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Product, ProductNotificationSettings } from "@/types/product";
 import {
   Card,
@@ -52,30 +52,36 @@ export function NotificationSettings({
   products,
   onProductUpdate,
 }: NotificationSettingsProps) {
+  // Default settings
+  const defaultSettings: Required<ProductNotificationSettings> = useMemo(
+    () => ({
+      lowStockThreshold: 10,
+      inactivityDays: 30,
+      expirationWarningDays: 7,
+      enableLowStockAlerts: true,
+      enableExpirationAlerts: true,
+      enableInactivityAlerts: true,
+      enableAuditAlerts: true,
+    }),
+    []
+  );
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [settings, setSettings] = useState<ProductNotificationSettings>({});
+  const [settings, setSettings] =
+    useState<ProductNotificationSettings>(defaultSettings);
   const [saving, setSaving] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Default settings
-  const defaultSettings: Required<ProductNotificationSettings> = {
-    lowStockThreshold: 10,
-    inactivityDays: 30,
-    expirationWarningDays: 7,
-    enableLowStockAlerts: true,
-    enableExpirationAlerts: true,
-    enableInactivityAlerts: true,
-    enableAuditAlerts: true,
-  };
-
   useEffect(() => {
     if (selectedProduct) {
-      setSettings({
+      const mergedSettings = {
         ...defaultSettings,
         ...selectedProduct.notificationSettings,
-      });
+      };
+      console.log("Setting settings:", mergedSettings);
+      setSettings(mergedSettings);
     }
-  }, [selectedProduct]);
+  }, [selectedProduct, defaultSettings]);
 
   const handleSave = async () => {
     if (!selectedProduct) return;
@@ -220,7 +226,7 @@ export function NotificationSettings({
               </TableHeader>
               <TableBody>
                 {products.map((product) => {
-                  const settings = {
+                  const productSettings = {
                     ...defaultSettings,
                     ...product.notificationSettings,
                   };
@@ -246,20 +252,20 @@ export function NotificationSettings({
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <AlertTriangle className="h-3 w-3 text-orange-500" />
-                          {settings.lowStockThreshold || "Default (10)"}
+                          {productSettings.lowStockThreshold || "Default (10)"}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3 text-blue-500" />
-                          {settings.inactivityDays} días
+                          {productSettings.inactivityDays} días
                         </div>
                       </TableCell>
                       <TableCell>
                         {product.expirationDate ? (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3 text-red-500" />
-                            {settings.expirationWarningDays} días aviso
+                            {productSettings.expirationWarningDays} días aviso
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">
@@ -307,13 +313,15 @@ export function NotificationSettings({
                                     </div>
                                     <Switch
                                       id="lowStock"
-                                      checked={settings.enableLowStockAlerts}
-                                      onCheckedChange={(checked) =>
+                                      checked={
+                                        settings.enableLowStockAlerts ?? true
+                                      }
+                                      onCheckedChange={(checked) => {
                                         setSettings((prev) => ({
                                           ...prev,
                                           enableLowStockAlerts: checked,
-                                        }))
-                                      }
+                                        }));
+                                      }}
                                     />
                                   </div>
 
@@ -326,7 +334,9 @@ export function NotificationSettings({
                                     </div>
                                     <Switch
                                       id="expiration"
-                                      checked={settings.enableExpirationAlerts}
+                                      checked={
+                                        settings.enableExpirationAlerts ?? true
+                                      }
                                       onCheckedChange={(checked) =>
                                         setSettings((prev) => ({
                                           ...prev,
@@ -345,7 +355,9 @@ export function NotificationSettings({
                                     </div>
                                     <Switch
                                       id="inactivity"
-                                      checked={settings.enableInactivityAlerts}
+                                      checked={
+                                        settings.enableInactivityAlerts ?? true
+                                      }
                                       onCheckedChange={(checked) =>
                                         setSettings((prev) => ({
                                           ...prev,
@@ -362,7 +374,9 @@ export function NotificationSettings({
                                     </div>
                                     <Switch
                                       id="audit"
-                                      checked={settings.enableAuditAlerts}
+                                      checked={
+                                        settings.enableAuditAlerts ?? true
+                                      }
                                       onCheckedChange={(checked) =>
                                         setSettings((prev) => ({
                                           ...prev,
