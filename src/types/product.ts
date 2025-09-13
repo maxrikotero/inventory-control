@@ -3,7 +3,11 @@ export type Product = {
   name: string;
   brand: string;
   quantity: number; // total units ever added
-  unitPrice: number;
+  // Pricing structure
+  costPrice: number; // Precio de costo
+  listPrice: number; // Precio de lista
+  listPrice2: number; // Precio lista 2 (con descuento)
+  unitPrice: number; // Precio actual de venta (puede ser listPrice o listPrice2)
   createdAt: number;
   updatedAt: number;
   // User ownership
@@ -15,9 +19,6 @@ export type Product = {
   maxStock?: number;
   // Reserved stock for pending orders
   reservedStock: number;
-  // Expiration tracking
-  expirationDate?: number;
-  lotNumber?: string;
   // Notification settings
   notificationSettings?: ProductNotificationSettings;
   // Audit tracking
@@ -29,12 +30,13 @@ export type NewProductInput = {
   name: string;
   brand: string;
   quantity: number;
+  costPrice: number;
+  listPrice: number;
+  listPrice2: number;
   unitPrice: number;
   stockAvailable?: number;
   minStock?: number;
   maxStock?: number;
-  expirationDate?: number;
-  lotNumber?: string;
   notificationSettings?: ProductNotificationSettings;
 };
 
@@ -90,8 +92,6 @@ export type StockAlert = {
 export type NotificationType =
   | "LOW_STOCK"
   | "OUT_OF_STOCK"
-  | "EXPIRATION_WARNING"
-  | "EXPIRATION_CRITICAL"
   | "INACTIVE_PRODUCT"
   | "AUDIT_DIFFERENCE"
   | "OVERSTOCK"
@@ -119,9 +119,7 @@ export type SmartNotification = {
 export type ProductNotificationSettings = {
   lowStockThreshold?: number; // Custom threshold for this product
   inactivityDays?: number; // Days without movement before alert
-  expirationWarningDays?: number; // Days before expiration to warn
   enableLowStockAlerts?: boolean;
-  enableExpirationAlerts?: boolean;
   enableInactivityAlerts?: boolean;
   enableAuditAlerts?: boolean;
 };

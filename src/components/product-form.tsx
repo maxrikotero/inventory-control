@@ -15,11 +15,12 @@ const schema = z
     name: z.string().min(1, "Requerido"),
     brand: z.string().min(1, "Requerido"),
     quantity: z.coerce.number().int().min(0),
+    costPrice: z.coerce.number().min(0),
+    listPrice: z.coerce.number().min(0),
+    listPrice2: z.coerce.number().min(0),
     unitPrice: z.coerce.number().min(0),
     minStock: z.coerce.number().int().min(0).optional(),
     maxStock: z.coerce.number().int().min(0).optional(),
-    expirationDate: z.string().optional(),
-    lotNumber: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -31,6 +32,18 @@ const schema = z
     {
       message: "El stock mínimo debe ser menor o igual al stock máximo",
       path: ["maxStock"],
+    }
+  )
+  .refine(
+    (data) => {
+      return (
+        data.costPrice <= data.listPrice && data.costPrice <= data.listPrice2
+      );
+    },
+    {
+      message:
+        "El precio de costo debe ser menor o igual a los precios de lista",
+      path: ["costPrice"],
     }
   );
 
@@ -55,37 +68,28 @@ export function ProductForm({
           name: product.name,
           brand: product.brand,
           quantity: product.quantity,
+          costPrice: product.costPrice,
+          listPrice: product.listPrice,
+          listPrice2: product.listPrice2,
           unitPrice: product.unitPrice,
           minStock: product.minStock || undefined,
           maxStock: product.maxStock || undefined,
-          expirationDate: product.expirationDate
-            ? new Date(product.expirationDate).toISOString().split("T")[0]
-            : undefined,
-          lotNumber: product.lotNumber || undefined,
         }
       : undefined,
   });
 
   async function onSubmit(values: FormValues) {
     try {
-      // Convert date string to timestamp if provided
-      const processedValues = {
-        ...values,
-        expirationDate: values.expirationDate
-          ? new Date(values.expirationDate).getTime()
-          : undefined,
-      };
-
       if (product) {
-        await updateProduct(product.id, processedValues);
+        await updateProduct(product.id, values);
         toast.success("Producto actualizado");
         onCreated?.({
           ...product,
-          ...processedValues,
+          ...values,
           id: product.id,
         } as Product);
       } else {
-        const created = await createProduct(processedValues);
+        const created = await createProduct(values);
         toast.success("Producto creado");
         onCreated?.(created);
         reset();
@@ -128,17 +132,66 @@ export function ProductForm({
           )}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="unitPrice">Precio por unidad</Label>
+          <Label htmlFor="costPrice">Precio de Costo</Label>
+          <Input
+            id="costPrice"
+            type="number"
+            step="0.01"
+            inputMode="decimal"
+            placeholder="0.00"
+            {...register("costPrice")}
+          />
+          {errors.costPrice && (
+            <p className="text-xs text-red-500">{errors.costPrice.message}</p>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="listPrice">Precio de Lista</Label>
+          <Input
+            id="listPrice"
+            type="number"
+            step="0.01"
+            inputMode="decimal"
+            placeholder="0.00"
+            {...register("listPrice")}
+          />
+          {errors.listPrice && (
+            <p className="text-xs text-red-500">{errors.listPrice.message}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="listPrice2">Precio Lista 2</Label>
+          <Input
+            id="listPrice2"
+            type="number"
+            step="0.01"
+            inputMode="decimal"
+            placeholder="0.00"
+            {...register("listPrice2")}
+          />
+          {errors.listPrice2 && (
+            <p className="text-xs text-red-500">{errors.listPrice2.message}</p>
+          )}
+          <p className="text-xs text-muted-foreground">Precio con descuento</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="unitPrice">Precio de Venta</Label>
           <Input
             id="unitPrice"
             type="number"
             step="0.01"
             inputMode="decimal"
+            placeholder="0.00"
             {...register("unitPrice")}
           />
           {errors.unitPrice && (
             <p className="text-xs text-red-500">{errors.unitPrice.message}</p>
           )}
+          <p className="text-xs text-muted-foreground">
+            Precio actual de venta
+          </p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -172,40 +225,6 @@ export function ProductForm({
           )}
           <p className="text-xs text-muted-foreground">
             Alerta cuando el stock supere este valor
-          </p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="expirationDate">
-            Fecha de Vencimiento (opcional)
-          </Label>
-          <Input
-            id="expirationDate"
-            type="date"
-            {...register("expirationDate")}
-          />
-          {errors.expirationDate && (
-            <p className="text-xs text-red-500">
-              {errors.expirationDate.message}
-            </p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Para productos perecederos
-          </p>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="lotNumber">Número de Lote (opcional)</Label>
-          <Input
-            id="lotNumber"
-            placeholder="LOT001"
-            {...register("lotNumber")}
-          />
-          {errors.lotNumber && (
-            <p className="text-xs text-red-500">{errors.lotNumber.message}</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Para trazabilidad de productos
           </p>
         </div>
       </div>

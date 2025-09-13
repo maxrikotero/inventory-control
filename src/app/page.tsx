@@ -8,6 +8,13 @@ import { SmartNotificationsCenter } from "@/components/smart-notifications-cente
 import { NotificationSettings } from "@/components/notification-settings";
 import { InventoryAudit } from "@/components/inventory-audit";
 import { UserProfile } from "@/components/user-profile";
+import { SalesDashboard } from "@/components/sales-dashboard";
+import { AIChatbot } from "@/components/ai-chatbot";
+import { AIInsightsPanel } from "@/components/ai-insights-panel";
+import { AIAutomationPanel } from "@/components/ai-automation-panel";
+import { AdvancedReportsPanel } from "@/components/advanced-reports-panel";
+import { PerformancePanel } from "@/components/performance-panel";
+import { TestingPanel } from "@/components/testing-panel";
 import { AuthWrapper } from "@/components/auth-wrapper";
 import { useAuth } from "@/components/auth-provider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +30,11 @@ import {
   Settings,
   LogOut,
   User,
+  ShoppingCart,
+  Brain,
+  Zap,
+  FileText,
+  TestTube,
 } from "lucide-react";
 
 export default function Home() {
@@ -101,7 +113,7 @@ export default function Home() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dashboard
@@ -109,6 +121,39 @@ export default function Home() {
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Productos
+            </TabsTrigger>
+            <TabsTrigger value="sales" className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Ventas
+            </TabsTrigger>
+            <TabsTrigger
+              value="ai-insights"
+              className="flex items-center gap-2"
+            >
+              <Brain className="h-4 w-4" />
+              AI Insights
+            </TabsTrigger>
+            <TabsTrigger
+              value="ai-automation"
+              className="flex items-center gap-2"
+            >
+              <Zap className="h-4 w-4" />
+              AI Automation
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Reportes
+            </TabsTrigger>
+            <TabsTrigger
+              value="performance"
+              className="flex items-center gap-2"
+            >
+              <Zap className="h-4 w-4" />
+              Rendimiento
+            </TabsTrigger>
+            <TabsTrigger value="testing" className="flex items-center gap-2">
+              <TestTube className="h-4 w-4" />
+              Testing
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
@@ -124,10 +169,6 @@ export default function Home() {
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Configuración
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Perfil
             </TabsTrigger>
           </TabsList>
 
@@ -147,6 +188,82 @@ export default function Home() {
                 </p>
               </div>
               <ProductTable />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sales">
+            <SalesDashboard onSaleUpdate={loadProducts} />
+          </TabsContent>
+
+          <TabsContent value="ai-insights">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Insights de Inteligencia Artificial
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Análisis avanzado con machine learning para optimizar tu
+                  inventario.
+                </p>
+              </div>
+              <AIInsightsPanel />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="ai-automation">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Automatización con IA
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Reglas inteligentes y automatización de procesos de
+                  inventario.
+                </p>
+              </div>
+              <AIAutomationPanel />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Reportes Avanzados
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Análisis detallados y reportes ejecutivos con insights de IA.
+                </p>
+              </div>
+              <AdvancedReportsPanel />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="performance">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Optimización de Rendimiento
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Monitoreo y optimización del rendimiento de la aplicación.
+                </p>
+              </div>
+              <PerformancePanel />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="testing">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Testing y Calidad
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Suite completa de testing y análisis de calidad del código.
+                </p>
+              </div>
+              <TestingPanel />
             </div>
           </TabsContent>
 
@@ -198,21 +315,10 @@ export default function Home() {
               />
             </div>
           </TabsContent>
-
-          <TabsContent value="profile">
-            <div className="space-y-6">
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold tracking-tight">
-                  Perfil de Usuario
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Gestiona tu información personal y configuración de cuenta.
-                </p>
-              </div>
-              <UserProfile />
-            </div>
-          </TabsContent>
         </Tabs>
+
+        {/* AI Chatbot */}
+        <AIChatbot />
       </div>
     </AuthWrapper>
   );

@@ -57,9 +57,7 @@ export function NotificationSettings({
     () => ({
       lowStockThreshold: 10,
       inactivityDays: 30,
-      expirationWarningDays: 7,
       enableLowStockAlerts: true,
-      enableExpirationAlerts: true,
       enableInactivityAlerts: true,
       enableAuditAlerts: true,
     }),
@@ -126,7 +124,6 @@ export function NotificationSettings({
 
     const activeAlerts = [
       settings.enableLowStockAlerts && "Stock Bajo",
-      settings.enableExpirationAlerts && "Vencimiento",
       settings.enableInactivityAlerts && "Inactividad",
       settings.enableAuditAlerts && "Auditorías",
     ].filter(Boolean);
@@ -144,7 +141,6 @@ export function NotificationSettings({
 
     const activeCount = [
       settings.enableLowStockAlerts,
-      settings.enableExpirationAlerts,
       settings.enableInactivityAlerts,
       settings.enableAuditAlerts,
     ].filter(Boolean).length;
@@ -189,14 +185,6 @@ export function NotificationSettings({
                 }
               </div>
             </div>
-            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="text-sm text-orange-600 font-medium">
-                Con Vencimiento
-              </div>
-              <div className="text-xl font-bold text-orange-900">
-                {products.filter((p) => p.expirationDate).length}
-              </div>
-            </div>
             <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
               <div className="text-sm text-purple-600 font-medium">
                 Stock Personalizado
@@ -220,7 +208,6 @@ export function NotificationSettings({
                   <TableHead>Estado de Alertas</TableHead>
                   <TableHead>Umbral Stock</TableHead>
                   <TableHead>Días Inactividad</TableHead>
-                  <TableHead>Vencimiento</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -260,18 +247,6 @@ export function NotificationSettings({
                           <Clock className="h-3 w-3 text-blue-500" />
                           {productSettings.inactivityDays} días
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {product.expirationDate ? (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-red-500" />
-                            {productSettings.expirationWarningDays} días aviso
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">
-                            Sin fecha
-                          </span>
-                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Dialog
@@ -322,27 +297,6 @@ export function NotificationSettings({
                                           enableLowStockAlerts: checked,
                                         }));
                                       }}
-                                    />
-                                  </div>
-
-                                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                                    <div className="flex items-center gap-2">
-                                      <Calendar className="h-4 w-4 text-red-500" />
-                                      <Label htmlFor="expiration">
-                                        Vencimiento
-                                      </Label>
-                                    </div>
-                                    <Switch
-                                      id="expiration"
-                                      checked={
-                                        settings.enableExpirationAlerts ?? true
-                                      }
-                                      onCheckedChange={(checked) =>
-                                        setSettings((prev) => ({
-                                          ...prev,
-                                          enableExpirationAlerts: checked,
-                                        }))
-                                      }
                                     />
                                   </div>
 
@@ -438,31 +392,6 @@ export function NotificationSettings({
                                     />
                                     <p className="text-xs text-muted-foreground">
                                       Alertar si no hay movimientos en X días
-                                    </p>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <Label htmlFor="expirationWarningDays">
-                                      Días Aviso Vencimiento
-                                    </Label>
-                                    <Input
-                                      id="expirationWarningDays"
-                                      type="number"
-                                      min="1"
-                                      value={
-                                        settings.expirationWarningDays || ""
-                                      }
-                                      onChange={(e) =>
-                                        setSettings((prev) => ({
-                                          ...prev,
-                                          expirationWarningDays:
-                                            parseInt(e.target.value) || 7,
-                                        }))
-                                      }
-                                      placeholder="7"
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                      Alertar X días antes del vencimiento
                                     </p>
                                   </div>
                                 </div>

@@ -108,43 +108,6 @@ export async function generateSmartNotifications(): Promise<
       );
     }
 
-    // Expiration warnings
-    if (settings.enableExpirationAlerts && product.expirationDate) {
-      const daysUntilExpiration = Math.ceil(
-        (product.expirationDate - Date.now()) / (1000 * 60 * 60 * 24)
-      );
-
-      if (daysUntilExpiration <= settings.expirationWarningDays) {
-        const isCritical = daysUntilExpiration <= 1;
-        notifications.push(
-          createNotification({
-            type: isCritical ? "EXPIRATION_CRITICAL" : "EXPIRATION_WARNING",
-            priority: isCritical ? "critical" : "high",
-            productId: product.id,
-            productName: product.name,
-            title: isCritical
-              ? "Producto Vencido/Venciendo"
-              : "Próximo a Vencer",
-            message: `${product.name} ${
-              isCritical
-                ? daysUntilExpiration <= 0
-                  ? "ya está vencido"
-                  : "vence hoy"
-                : `vence en ${daysUntilExpiration} días`
-            }`,
-            details: {
-              expirationDate: product.expirationDate,
-              daysUntilExpiration,
-              lotNumber: product.lotNumber,
-              currentStock: product.stockAvailable,
-            },
-            actionRequired: true,
-            expiresAt: product.expirationDate,
-          })
-        );
-      }
-    }
-
     // Inactive product notifications
     if (settings.enableInactivityAlerts) {
       const lastMovementDate = await getLastMovementDate(product.id);

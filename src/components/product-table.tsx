@@ -38,6 +38,13 @@ import {
 import Papa from "papaparse";
 import { format } from "date-fns";
 
+const parsePrice = (price: number) => {
+  if (price) {
+    return price.toFixed(2);
+  }
+  return "0.00";
+};
+
 export function ProductTable() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -77,11 +84,24 @@ export function ProductTable() {
   function exportCSV() {
     const csv = Papa.unparse(
       products.map(
-        ({ id, name, brand, quantity, unitPrice, stockAvailable }) => ({
+        ({
           id,
           name,
           brand,
           quantity,
+          costPrice,
+          listPrice,
+          listPrice2,
+          unitPrice,
+          stockAvailable,
+        }) => ({
+          id,
+          name,
+          brand,
+          quantity,
+          costPrice,
+          listPrice,
+          listPrice2,
           unitPrice,
           stockAvailable,
         })
@@ -101,6 +121,9 @@ export function ProductTable() {
     name?: string;
     brand?: string;
     quantity?: string | number;
+    costPrice?: string | number;
+    listPrice?: string | number;
+    listPrice2?: string | number;
     unitPrice?: string | number;
     stockAvailable?: string | number;
   };
@@ -120,6 +143,18 @@ export function ProductTable() {
                 typeof row.quantity === "string"
                   ? Number(row.quantity)
                   : Number(row.quantity ?? 0),
+              costPrice:
+                typeof row.costPrice === "string"
+                  ? Number(row.costPrice)
+                  : Number(row.costPrice ?? 0),
+              listPrice:
+                typeof row.listPrice === "string"
+                  ? Number(row.listPrice)
+                  : Number(row.listPrice ?? 0),
+              listPrice2:
+                typeof row.listPrice2 === "string"
+                  ? Number(row.listPrice2)
+                  : Number(row.listPrice2 ?? 0),
               unitPrice:
                 typeof row.unitPrice === "string"
                   ? Number(row.unitPrice)
@@ -137,7 +172,7 @@ export function ProductTable() {
               userId: "import-user", // Temporary user ID for imported products
               reservedStock: 0,
               ...payload,
-            });
+            } as Product);
           }
           toast.success("Importación lista (local)");
         } catch (e) {
@@ -196,7 +231,10 @@ export function ProductTable() {
               <TableHead className="text-right">Cantidad Total</TableHead>
               <TableHead className="text-right">Stock Disponible</TableHead>
               <TableHead className="text-right">Min/Max</TableHead>
-              <TableHead className="text-right">Precio/unit</TableHead>
+              <TableHead className="text-right">Costo</TableHead>
+              <TableHead className="text-right">Lista</TableHead>
+              <TableHead className="text-right">Lista 2</TableHead>
+              <TableHead className="text-right">Venta</TableHead>
               <TableHead className="text-right">Ingreso</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -276,7 +314,16 @@ export function ProductTable() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    ${p.unitPrice.toFixed(2)}
+                    ${parsePrice(p.costPrice)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${parsePrice(p.listPrice)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${parsePrice(p.listPrice2)}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    ${parsePrice(p.unitPrice)}
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     {format(p.createdAt, "dd/MM/yy")}
